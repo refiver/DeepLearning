@@ -22,7 +22,7 @@ def korrekte_orientierung(bild):
 
 def zuschneiden_bilder():
     for fo in folder:
-        ordner_pfad ="./Trainingsdaten/" + fo
+        ordner_pfad ="./train_data/" + fo
         destination= "./Komprimiert2/" + fo
         dateien = os.listdir(ordner_pfad)
         for datei in dateien:
