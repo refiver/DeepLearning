@@ -8,17 +8,6 @@ import model_collection
 from logger import ExtendedCSVLogger
 
 
-# saving checkpoint for models
-checkpoint = ModelCheckpoint(
-    environments.PATH_TO_BEST_MODEL,  # path where the model should be saved to
-    monitor='val_loss',  # metric that is watched to determine whether it is necessary to save the model
-    save_best_only=True,  # saves the best model only
-    save_weights_only=False,  # saves whole model (not only weights)
-    mode='auto',  # saving-mode ('auto', 'min', 'max')
-    verbose=1  # show progress
-)
-
-
 def create_image_generators():
     """Creates and returns instances of image data generators that are used to generate the correct data format
      needed for the neural network"""
@@ -58,9 +47,9 @@ def initialize_selected_model(model_number):
     """Initializes a specific model which can be selected by its number"""
 
     # checks if old log-file exists
-    if os.path.exists(environments.PATH_TO_TRAINING_LOGS):
+    if os.path.exists(environments.PATH_TO_TRAINING_LOGS + str(model_number) + ".csv"):
         # removes the file
-        os.remove(environments.PATH_TO_TRAINING_LOGS)
+        os.remove(environments.PATH_TO_TRAINING_LOGS + str(model_number) + ".csv")
 
     # determines which model should be loaded
     match model_number:
@@ -75,13 +64,14 @@ def initialize_selected_model(model_number):
 # safely loads a model if available, otherwise signals, that it has to be created first
 def load_model(model_number):
     # checks if a model already exists if not then it initializes and returns a newly created one
-    if os.path.exists(environments.PATH_TO_BEST_MODEL) and os.path.exists(environments.PATH_TO_TRAINING_LOGS):
+    if os.path.exists(environments.PATH_TO_BEST_MODEL + str(model_number) + ".keras") and \
+            os.path.exists(environments.PATH_TO_TRAINING_LOGS + str(model_number) + ".csv"):
 
         # loads model
-        loaded_model = tf.keras.models.load_model(environments.PATH_TO_BEST_MODEL)
+        loaded_model = tf.keras.models.load_model(environments.PATH_TO_BEST_MODEL + str(model_number) + ".keras")
 
         # loads training logs
-        training_log = pd.read_csv(environments.PATH_TO_TRAINING_LOGS)
+        training_log = pd.read_csv(environments.PATH_TO_TRAINING_LOGS + str(model_number) + ".csv")
 
         # determine the last completed epoch and therefor where to start from
         initial_epoch = training_log['epoch'].max() + 1
@@ -91,10 +81,21 @@ def load_model(model_number):
         return initialize_selected_model(model_number), 0
 
 
-def fit_and_evaluate_model(model, initial_epoch, train_generator, validation_generator, test_generator):
+def fit_and_evaluate_model(model, initial_epoch, train_generator, validation_generator, test_generator, model_number):
     """Takes in a model that is then trained and evaluated"""
 
-    csv_logger = ExtendedCSVLogger(environments.PATH_TO_TRAINING_LOGS, validation_generator, True)
+    # initializes csv-logger
+    csv_logger = ExtendedCSVLogger(environments.PATH_TO_TRAINING_LOGS + str(model_number) + ".csv", validation_generator, True)
+
+    # creates saving checkpoint for models
+    checkpoint = ModelCheckpoint(
+        environments.PATH_TO_BEST_MODEL + str(model_number) + ".keras",  # path where the model should be saved to
+        monitor='val_loss',  # metric that is watched to determine whether it is necessary to save the model
+        save_best_only=True,  # saves the best model only
+        save_weights_only=False,  # saves whole model (not only weights)
+        mode='auto',  # saving-mode ('auto', 'min', 'max')
+        verbose=1  # show progress
+    )
 
     # trains and validates the model
     model.fit(
