@@ -1,110 +1,102 @@
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras import layers, models
-import numpy as np
 from tensorflow.keras.callbacks import ModelCheckpoint
-from tensorflow.keras.callbacks import CSVLogger
 import pandas as pd
 import os.path
 import environments
+import model_collection
+from logger import ExtendedCSVLogger
 
-csv_logger = CSVLogger(environments.PATH_TO_TRAINING_LOGS, append=True)
 
+# saving checkpoint for models
 checkpoint = ModelCheckpoint(
-    environments.PATH_TO_BEST_MODEL,  # Pfad und Name der Datei, in der das Modell gespeichert wird
-    monitor='val_loss',  # Metrik, die überwacht wird, um das Modell zu speichern
-    save_best_only=True,  # Nur das beste Modell speichern
-    save_weights_only=False,  # Das gesamte Modell speichern (nicht nur die Gewichte)
-    mode='auto',  # Speichermodus ('auto', 'min', 'max')
-    verbose=1  # Fortschritt anzeigen
+    environments.PATH_TO_BEST_MODEL,  # path where the model should be saved to
+    monitor='val_loss',  # metric that is watched to determine whether it is necessary to save the model
+    save_best_only=True,  # saves the best model only
+    save_weights_only=False,  # saves whole model (not only weights)
+    mode='auto',  # saving-mode ('auto', 'min', 'max')
+    verbose=1  # show progress
 )
 
 
 def create_image_generators():
-    # Bilddaten-Generator
+    """Creates and returns instances of image data generators that are used to generate the correct data format
+     needed for the neural network"""
+
     train_datagen = ImageDataGenerator(rescale=0.255)
     validation_datagen = ImageDataGenerator(rescale=0.255)
     test_datagen = ImageDataGenerator(rescale=0.255)
 
-    # Lade die Trainings- und Testbilder
+    # loads training images
     train_generator = train_datagen.flow_from_directory(
         environments.PATH_TO_TRAINING_DATA,
-        target_size=(200, 400),
-        batch_size=32,
-        class_mode='categorical'  # oder 'binary' für weniger als 2 Klassen
-    )
-
-    validation_generator = validation_datagen.flow_from_directory(
-        environments.PATH_TO_VALIDATION_DATA,
-        target_size=(200, 400),
+        target_size=(200, 200),
         batch_size=32,
         class_mode='categorical'
     )
 
+    # loads validation images
+    validation_generator = validation_datagen.flow_from_directory(
+        environments.PATH_TO_VALIDATION_DATA,
+        target_size=(200, 200),
+        batch_size=32,
+        class_mode='categorical'
+    )
+
+    # loads test images
     test_generator = test_datagen.flow_from_directory(
         environments.PATH_TO_TEST_DATA,
-        target_size=(200, 400),
+        target_size=(200, 200),
         batch_size=32,
-        class_mode='categorical'  # oder 'binary' für weniger als 2 Klassen
+        class_mode='categorical'
     )
 
     return train_generator, validation_generator, test_generator
 
 
-def initialize_model():
+def initialize_selected_model(model_number):
+    """Initializes a specific model which can be selected by its number"""
+
+    # checks if old log-file exists
     if os.path.exists(environments.PATH_TO_TRAINING_LOGS):
-        # Datei entfernen
+        # removes the file
         os.remove(environments.PATH_TO_TRAINING_LOGS)
-        print("Die Datei {csv_file} wurde erfolgreich entfernt.".format(csv_file = environments.PATH_TO_TRAINING_LOGS))
 
-    model = models.Sequential([
-        layers.Conv2D(32, (3, 3), activation='relu', input_shape=(200, 400, 3)),
-        layers.MaxPooling2D((2, 2)),
-        layers.Conv2D(64, (3, 3), activation='relu'),
-        layers.MaxPooling2D((2, 2)),
-        layers.Conv2D(128, (3, 3), activation='relu'),
-        layers.MaxPooling2D((2, 2)),
-        layers.Conv2D(128, (3, 3), activation='relu'),
-        layers.MaxPooling2D((2, 2)),
-        layers.Flatten(),
-        layers.Dense(512, activation='relu'),
-        layers.Dense(9, activation='softmax')  # oder 'sigmoid' für weniger als 2 Klassen
-    ])
-
-    # Kompiliere das Modell
-    model.compile(optimizer='adam',
-                  loss='binary_crossentropy',  # oder 'categorical_crossentropy' für mehr als 2 Klassen
-                  metrics=['accuracy'])
-
-    return model
+    # determines which model should be loaded
+    match model_number:
+        case 1:
+            return model_collection.initialize_model1()
+        case 2:
+            return model_collection.initialize_model1()
+        case 3:
+            return model_collection.initialize_model1()
 
 
 # safely loads a model if available, otherwise signals, that it has to be created first
-def load_model():
-    # checks if a model already exists
+def load_model(model_number):
+    # checks if a model already exists if not then it initializes and returns a newly created one
     if os.path.exists(environments.PATH_TO_BEST_MODEL) and os.path.exists(environments.PATH_TO_TRAINING_LOGS):
+
         # loads model
         loaded_model = tf.keras.models.load_model(environments.PATH_TO_BEST_MODEL)
+
         # loads training logs
         training_log = pd.read_csv(environments.PATH_TO_TRAINING_LOGS)
 
         # determine the last completed epoch and therefor where to start from
         initial_epoch = training_log['epoch'].max() + 1
 
-        print(training_log['epoch'])
-
-        if initial_epoch >= environments.EPOCHS:
-            print(initial_epoch)
-            # initial_epoch = 0
-            print('HERE IS THE EPOCHS')
-
         return loaded_model, initial_epoch
     else:
-        return initialize_model(), 0
+        return initialize_selected_model(model_number), 0
 
 
 def fit_and_evaluate_model(model, initial_epoch, train_generator, validation_generator, test_generator):
-    # Trainiere das Modell
+    """Takes in a model that is then trained and evaluated"""
+
+    csv_logger = ExtendedCSVLogger(environments.PATH_TO_TRAINING_LOGS, validation_generator, True)
+
+    # trains and validates the model
     model.fit(
         train_generator,
         steps_per_epoch=train_generator.samples // train_generator.batch_size,
@@ -115,6 +107,6 @@ def fit_and_evaluate_model(model, initial_epoch, train_generator, validation_gen
         initial_epoch=initial_epoch
     )
 
-    # Evaluieren des Modells
+    # evaluates the model using the test data
     test_loss, test_acc = model.evaluate(test_generator)
     print(f'Test accuracy: {test_acc}')
