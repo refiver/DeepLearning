@@ -1,4 +1,3 @@
-
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models
@@ -57,7 +56,7 @@ def initialize_model():
         # Datei entfernen
         os.remove(environments.PATH_TO_TRAINING_LOGS)
         print("Die Datei {csv_file} wurde erfolgreich entfernt.".format(csv_file = environments.PATH_TO_TRAINING_LOGS))
-
+# one dropout layer with 0.7 as parameter
     model = models.Sequential([
         layers.Conv2D(32, (3, 3), activation='relu', input_shape=(200, 400, 3)),
         layers.MaxPooling2D((2, 2)),
@@ -71,6 +70,7 @@ def initialize_model():
         layers.MaxPooling2D((2, 2)),
         layers.Flatten(),
         layers.Dense(512, activation='relu'),
+        layers.Dropout(0.7),
         layers.Dense(9, activation='softmax')  # oder 'sigmoid' für weniger als 2 Klassen
     ])
 

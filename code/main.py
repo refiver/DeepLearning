@@ -1,4 +1,5 @@
-import model_administration
+
+import model_administration as model_administration
 
 loaded_model, initial_epoch = model_administration.load_model()
 

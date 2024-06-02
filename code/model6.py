@@ -1,4 +1,3 @@
-
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models
@@ -23,7 +22,17 @@ checkpoint = ModelCheckpoint(
 
 def create_image_generators():
     # Bilddaten-Generator
-    train_datagen = ImageDataGenerator(rescale=0.255)
+    train_datagen = ImageDataGenerator(
+        rescale=0.255,
+        rotation_range=20,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        channel_shift_range=0.2,
+        fill_mode='nearest'
+    )
     validation_datagen = ImageDataGenerator(rescale=0.255)
     test_datagen = ImageDataGenerator(rescale=0.255)
 
@@ -121,3 +130,4 @@ def fit_and_evaluate_model(model, initial_epoch, train_generator, validation_gen
     # Evaluieren des Modells
     test_loss, test_acc = model.evaluate(test_generator)
     print(f'Test accuracy: {test_acc}')
+

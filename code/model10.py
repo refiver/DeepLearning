@@ -68,7 +68,7 @@ def initialize_model():
         layers.Conv2D(128, (3, 3), activation='relu'),
         layers.MaxPooling2D((2, 2)),
         layers.Conv2D(128, (3, 3), activation='relu'),
-        layers.MaxPooling2D((2, 2)),
+        layers.MaxPooling2D((3, 3)),
         layers.Flatten(),
         layers.Dense(512, activation='relu'),
         layers.Dense(9, activation='softmax')  # oder 'sigmoid' für weniger als 2 Klassen
