@@ -1,6 +1,7 @@
 import model_administration
 import environments
 
+
 loaded_model, initial_epoch = model_administration.load_model(environments.CURRENT_MODEL)
 
 model_administration.fit_and_evaluate_model(

@@ -32,7 +32,8 @@ class ExtendedCSVLogger(tf.keras.callbacks.Callback):
                 'loss',
                 'validation_accuracy',
                 'validation_loss',
-                'precision', 'recall',
+                'precision',
+                'recall',
                 'learning_rate'
             ]
             self.file_writer.write(self.separator.join(columns) + '\n')
