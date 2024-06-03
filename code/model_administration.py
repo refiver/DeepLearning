@@ -5,7 +5,16 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 import pandas as pd
 import os.path
 import environments
-import model_collection
+from models import model1
+from models import model2
+from models import model3
+from models import model4
+from models import model5
+from models import model6
+from models import model7
+from models import model8
+from models import model9
+from models import model10
 from logger import ExtendedCSVLogger
 
 
@@ -55,11 +64,25 @@ def initialize_selected_model(model_number):
     # determines which model should be loaded
     match model_number:
         case 1:
-            return model_collection.initialize_model1()
+            return model1.initialize_model()
         case 2:
-            return model_collection.initialize_model1()
+            return model2.initialize_model()
         case 3:
-            return model_collection.initialize_model1()
+            return model3.initialize_model()
+        case 4:
+            return model4.initialize_model()
+        # case 5:
+        #    return model5.initialize_model()
+        # case 6:
+        #    return model6.initialize_model()
+        # case 7:
+        #    return model7.initialize_model()
+        case 8:
+            return model8.initialize_model()
+        case 9:
+            return model9.initialize_model()
+        case 10:
+            return model10.initialize_model()
 
 
 # safely loads a model if available, otherwise signals, that it has to be created first
