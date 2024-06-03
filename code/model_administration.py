@@ -71,12 +71,12 @@ def initialize_selected_model(model_number):
             return model3.initialize_model()
         case 4:
             return model4.initialize_model()
-        # case 5:
-        #    return model5.initialize_model()
-        # case 6:
-        #    return model6.initialize_model()
-        # case 7:
-        #    return model7.initialize_model()
+        case 5:
+            return model5.initialize_model()
+        case 6:
+            return model6.initialize_model()
+        case 7:
+            return model7.initialize_model()
         case 8:
             return model8.initialize_model()
         case 9:
