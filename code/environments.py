@@ -6,5 +6,5 @@ PATH_TO_VALIDATION_DATA = '../data/validation_data'
 PATH_TO_TEST_DATA = '../data/test_data'
 
 # Model Parameters
-CURRENT_MODEL = 1
+CURRENT_MODEL = 13
 EPOCHS = 20

@@ -4,6 +4,7 @@ import environments
 
 
 def create_image_generators():
+    # creates augmented training data which is horizontally flipped
     train_datagen = ImageDataGenerator(
         rescale=0.255,
         rotation_range=20,

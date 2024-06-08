@@ -15,6 +15,9 @@ from models import model7
 from models import model8
 from models import model9
 from models import model10
+from models import model11
+from models import model12
+from models import model13
 from logger import ExtendedCSVLogger
 
 
@@ -83,6 +86,12 @@ def initialize_selected_model(model_number):
             return model9.initialize_model()
         case 10:
             return model10.initialize_model()
+        case 11:
+            return model11.initialize_model()
+        case 12:
+            return model12.initialize_model()
+        case 13:
+            return model13.initialize_model()
 
 
 # safely loads a model if available, otherwise signals, that it has to be created first
@@ -107,6 +116,11 @@ def load_model(model_number):
 
 def fit_and_evaluate_model(model, initial_epoch, train_generator, validation_generator, test_generator, model_number):
     """Takes in a model that is then trained and evaluated"""
+
+    # prints model information
+    info = "Model:{number}".format(number=model_number)
+    print(info)
+    print(model.summary())
 
     # initializes csv-logger
     csv_logger = ExtendedCSVLogger(environments.PATH_TO_TRAINING_LOGS + str(model_number) + ".csv", validation_generator, True)

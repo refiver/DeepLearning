@@ -5,7 +5,7 @@ from models import model7
 import environments
 
 
-for current_model in range(environments.CURRENT_MODEL, 11):
+for current_model in range(environments.CURRENT_MODEL, 14):
 
     loaded_model, initial_epoch = model_administration.load_model(current_model)
     match current_model:

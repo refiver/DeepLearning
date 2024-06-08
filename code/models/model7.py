@@ -3,6 +3,7 @@ from tensorflow.keras import layers, models
 import environments
 
 def create_image_generators():
+    # creates augmented training data which is vertically flipped
     train_datagen = ImageDataGenerator(
         rescale=0.255,
         rotation_range=20,
