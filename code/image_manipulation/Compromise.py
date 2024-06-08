@@ -1,8 +1,10 @@
 from PIL import Image
 from PIL.ExifTags import TAGS
 import os
+# a list with our nine classes
 folder = ["Birke", "Buche","Eiche","Kastanie","Linde","Kiefer","Kirsche", "Platane", "Robinie"]
 
+# Prevent the images from being rotated when compressing.
 def korrekte_orientierung(bild):
     try:
         exif = bild._getexif()
@@ -16,10 +18,10 @@ def korrekte_orientierung(bild):
                     elif wert == 8:
                         bild = bild.rotate(90, expand=True)
     except AttributeError:
-        pass  # Bei Bildern ohne Exif-Daten wird eine AttributeError-Ausnahme ausgelöst
+        pass  # images without  Exif-Data do not cause AttributeError-exception
     return bild
 
-
+# cut the images in all nine folders
 def zuschneiden_bilder():
     for fo in folder:
         ordner_pfad ="./train_data/" + fo
