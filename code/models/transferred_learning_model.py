@@ -1,67 +1,90 @@
 import tensorflow as tf
 from tensorflow.keras.applications import VGG16, VGG19
-from tensorflow.keras.layers import Dense, Flatten
-from tensorflow.keras.models import Model
+from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.callbacks import ModelCheckpoint
 import sys
 sys.path.insert(1, '../../code')
 
 import environments
 import model_administration
+from logger import ExtendedCSVLogger
 
-# Hyperparameter
-img_height, img_width = 200, 200
-num_classes = 9
-batch_size = 32
-epochs = 10
 
-train_data, val_data, test_data = model_administration.create_image_generators()
+def create_image_generators():
+    """Creates and returns instances of image data generators that are used to generate the correct data format
+     needed for the neural network"""
 
-# Funktion zum Erstellen des Modells
-def create_model(base_model):
-    x = base_model.output
-    x = Flatten()(x)
-    x = Dense(512, activation='relu')(x)  # Erster Dense-Layer
-    predictions = Dense(num_classes, activation='softmax')(x)  # Ausgabeschicht für 9 Klassen
-    model = Model(inputs=base_model.input, outputs=predictions)
-    return model
+    train_datagen = ImageDataGenerator(rescale=0.255)
+    validation_datagen = ImageDataGenerator(rescale=0.255)
+    test_datagen = ImageDataGenerator(rescale=0.255)
 
-# Laden des vortrainierten VGG16 Modells
-base_model_vgg16 = VGG16(weights='imagenet', include_top=False, input_shape=(img_height, img_width, 3))
-for layer in base_model_vgg16.layers:
-    layer.trainable = False  # Gefrorene Schichten
+    # loads training images
+    train_generator = train_datagen.flow_from_directory(
+        '../' + environments.PATH_TO_TRAINING_DATA,
+        target_size=(200, 200),
+        batch_size=32,
+        class_mode='categorical'
+    )
 
-model_vgg16 = create_model(base_model_vgg16)
+    # loads validation images
+    validation_generator = validation_datagen.flow_from_directory(
+        '../' + environments.PATH_TO_VALIDATION_DATA,
+        target_size=(200, 200),
+        batch_size=32,
+        class_mode='categorical'
+    )
 
-# Kompilieren des Modells
-model_vgg16.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    # loads test images
+    test_generator = test_datagen.flow_from_directory(
+        '../' + environments.PATH_TO_TEST_DATA,
+        target_size=(200, 200),
+        batch_size=32,
+        class_mode='categorical'
+    )
 
-# Trainieren des Modells
-history_vgg16 = model_vgg16.fit(
-    train_generator,
-    steps_per_epoch=train_generator.samples // batch_size,
-    validation_data=validation_generator,
-    validation_steps=validation_generator.samples // batch_size,
-    epochs=epochs)
+    return train_generator, validation_generator, test_generator
 
-# Laden des vortrainierten VGG19 Modells
-base_model_vgg19 = VGG19(weights='imagenet', include_top=False, input_shape=(img_height, img_width, 3))
+
+train_generator, validation_generator, test_generator = create_image_generators()
+
+base_model_vgg19 = VGG19(weights='imagenet', include_top=False, input_shape=(200, 200, 3))
 for layer in base_model_vgg19.layers:
-    layer.trainable = False  # Gefrorene Schichten
+    layer.trainable = False
 
-model_vgg19 = create_model(base_model_vgg19)
+model = models.Sequential()
+model.add(base_model_vgg19)
 
-# Kompilieren des Modells
-model_vgg19.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model.add(layers.Flatten())
+model.add(layers.Dense(512, activation='relu'))
+model.add(layers.Dense(9, activation='softmax'))
 
-# Trainieren des Modells
-history_vgg19 = model_vgg19.fit(
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# initializes csv-logger
+csv_logger = ExtendedCSVLogger('../' + environments.PATH_TO_TRAINING_LOGS + str(14) + ".csv", validation_generator, True)
+
+# creates saving checkpoint for models
+checkpoint = ModelCheckpoint(
+    '../' + environments.PATH_TO_BEST_MODEL + str(14) + ".keras",  # path where the model should be saved to
+    monitor='accuracy',  # metric that is watched to determine whether it is necessary to save the model
+    save_best_only=True,  # saves the best model only
+    save_weights_only=False,  # saves whole model (not only weights)
+    mode='auto',  # saving-mode ('auto', 'min', 'max')
+    verbose=1  # show progress
+)
+
+# trains and validates the model
+model.fit(
     train_generator,
-    steps_per_epoch=train_generator.samples // batch_size,
+    steps_per_epoch=train_generator.samples // train_generator.batch_size,
+    epochs=environments.EPOCHS,
     validation_data=validation_generator,
-    validation_steps=validation_generator.samples // batch_size,
-    epochs=epochs)
+    validation_steps=validation_generator.samples // validation_generator.batch_size,
+    callbacks=[checkpoint, csv_logger],
+    initial_epoch=0
+)
 
-# Optional: Modell speichern
-model_vgg16.save('vgg16_transfer_learning_model.h5')
-model_vgg19.save('vgg19_transfer_learning_model.h5')
+# evaluates the model using the test data
+test_loss, test_acc = model.evaluate(test_generator)
+print(f'Test accuracy: {test_acc}')
