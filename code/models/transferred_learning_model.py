@@ -48,13 +48,15 @@ def create_image_generators():
 
 train_generator, validation_generator, test_generator = create_image_generators()
 
+# initialization of the vgg19 model
 base_model_vgg19 = VGG19(weights='imagenet', include_top=False, input_shape=(200, 200, 3))
 for layer in base_model_vgg19.layers:
-    layer.trainable = False
+    layer.trainable = False # freezing layers so the parameters will not change while training with own data
 
 model = models.Sequential()
 model.add(base_model_vgg19)
 
+# adding dense layers in order to classify own data
 model.add(layers.Flatten())
 model.add(layers.Dense(512, activation='relu'))
 model.add(layers.Dense(9, activation='softmax'))
